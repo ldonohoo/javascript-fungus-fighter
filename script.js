@@ -34,6 +34,7 @@
 let fungusGameData = {
     fungusHP : 100,
     attackPoints : 100,
+    regenPower: false,
     updateGameData: function(cost, damage) {
         // update HP and AP
         this.fungusHP -= damage;
@@ -73,7 +74,7 @@ function attackFungus(event) {
     } else if (elementClicked.classList.contains("dragon-blade")) {
         cost = 38;
         damage = 47;
-    } else if (elementClicked.classlist.contains("star-fire")) {
+    } else if (elementClicked.classList.contains("star-fire")) {
         cost = 33;
         damage = 25;
     }
@@ -82,17 +83,42 @@ function attackFungus(event) {
     renderGame();
 }
 
-
-
 // update DOM based on state values
 function renderGame() {
-    let freakyFungusElement = document.getElementById("")
-    // if bad fungus wins
-    if (fungusGameData.attackPoints === 0) {}
-
-    freakyFungusElement = replace("walk", "jump");
-    let attackButtonElements = document.getElementsByClassName("attack-btn");
-    for (i=0; i<attackButtonElements.length; i++) {
-        attackButtonElements[i].disabled = true;
+    // update hp & ap status text
+    let hpTextElement = document.querySelector(".hp-text");
+    let apTextElement = document.querySelector(".ap-text");
+    hpTextElement.textContent = fungusGameData.fungusHP;
+    apTextElement.textContent = fungusGameData.attackPoints;
+    // update hp & ap progress bars
+    let hpProgressElement = document.querySelector("#hp-meter");
+    let apProgressElement = document.querySelector("#ap-meter");
+    hpProgressElement.value = fungusGameData.fungusHP;
+    apProgressElement.value = fungusGameData.attackPoints;
+    // super regen fungus power if hp < 50
+    if (fungusGameData.fungusHP < 50 && fungusGameData.regenPower === false) {
+        // set a interval handler to start adding 50HP every 1000ms
+        //      (delete handler when fungus is dead)
+        let regenHP = setInterval(() => {fungusGameData.fungusHP += 50}, 1000);
+        fungusGameData.regenPower = true;
     }
+    // if fungus is dead and regen is on, turn off regen power and clear timer
+    // if (fungusGameData.fungusHP === 0 && 
+    //     fungusGameData.regenPower === true) {
+    //     clearInterval(regenHP);
+    //     fungusGameData.regenPower = false;
+    // }
+    // update fungus avatar if win or lose
+    let freakyFungusElement = document.querySelector(".freaky-fungus");
+    // if you win
+    if (fungusGameData.fungusHP === 0) {
+        freakyFungusElement.classList.replace("walk", "dead");
+    // else if bad fungus wins
+    } else if (fungusGameData.attackPoints === 0) {
+        freakyFungusElement.classList.replace("walk", "jump");
+        let attackButtonElements = document.getElementsByClassName("attack-btn");
+        for (i=0; i<attackButtonElements.length; i++) {
+          attackButtonElements[i].disabled = true;
+        }
+    } 
 }
