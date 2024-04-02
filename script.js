@@ -35,6 +35,15 @@ let fungusGameData = {
     fungusHP : 100,
     attackPoints : 100,
     regenPower: false,
+    regenHandler: null,
+    regenHP: function(hp) {
+        this.regenPower = true;
+        this.fungusHP += hp;
+        if (this.fungusHP > 100) {
+            this.fungusHP = 100;
+            this.regenPower = false;
+        }
+    },
     updateGameData: function(cost, damage) {
         // update HP and AP
         this.fungusHP -= damage;
@@ -51,8 +60,6 @@ let fungusGameData = {
 
 
 function onReady() {
-    console.log("Ready to go!")
-    
     // Make sure you check the index.html file! 
     // There are lots of buttons and things ready for you to hook into here!
     document.querySelector(".attacks").addEventListener("click", attackFungus);
@@ -79,43 +86,55 @@ function attackFungus(event) {
         damage = 25;
     }
     fungusGameData.updateGameData(cost, damage);
-    console.log(fungusGameData);
     renderGame();
 }
 
 // update DOM based on state values
 function renderGame() {
-    // update hp & ap status text
-    let hpTextElement = document.querySelector(".hp-text");
-    let apTextElement = document.querySelector(".ap-text");
-    hpTextElement.textContent = fungusGameData.fungusHP;
-    apTextElement.textContent = fungusGameData.attackPoints;
-    // update hp & ap progress bars
-    let hpProgressElement = document.querySelector("#hp-meter");
-    let apProgressElement = document.querySelector("#ap-meter");
-    hpProgressElement.value = fungusGameData.fungusHP;
-    apProgressElement.value = fungusGameData.attackPoints;
+    function updateStats() {
+        // update hp & ap status text
+        let hpTextElement = document.querySelector(".hp-text");
+        let apTextElement = document.querySelector(".ap-text");
+        hpTextElement.textContent = fungusGameData.fungusHP;
+        apTextElement.textContent = fungusGameData.attackPoints;
+        // update hp & ap progress bars
+        let hpProgressElement = document.querySelector("#hp-meter");
+        let apProgressElement = document.querySelector("#ap-meter");
+        hpProgressElement.value = fungusGameData.fungusHP;
+        apProgressElement.value = fungusGameData.attackPoints;
+    }
+    // update hp & ap text & bars
+    updateStats();
     // super regen fungus power if hp < 50
     if (fungusGameData.fungusHP < 50 && fungusGameData.regenPower === false) {
         // set a interval handler to start adding 50HP every 1000ms
         //      (delete handler when fungus is dead)
-        let regenHP = setInterval(() => {fungusGameData.fungusHP += 50}, 1000);
-        fungusGameData.regenPower = true;
+        fungusGameData.regenHandler = 
+            setInterval(() => {
+                fungusGameData.regenHP(1);
+                    updateStats();
+            }, 1000);
     }
     // if fungus is dead and regen is on, turn off regen power and clear timer
-    // if (fungusGameData.fungusHP === 0 && 
-    //     fungusGameData.regenPower === true) {
-    //     clearInterval(regenHP);
-    //     fungusGameData.regenPower = false;
-    // }
+    if (fungusGameData.fungusHP === 0 && 
+        fungusGameData.regenPower === true) {
+        clearInterval(fungusGameData.regenHandler);
+        fungusGameData.regenPower = false;
+    }
     // update fungus avatar if win or lose
     let freakyFungusElement = document.querySelector(".freaky-fungus");
     // if you win
     if (fungusGameData.fungusHP === 0) {
         freakyFungusElement.classList.replace("walk", "dead");
-    // else if bad fungus wins
-    } else if (fungusGameData.attackPoints === 0) {
-        freakyFungusElement.classList.replace("walk", "jump");
+
+    }
+    // if bad fungus wins
+    if (fungusGameData.attackPoints === 0) {
+        // if you already killed bad fungus or killed at same time
+        if (fungusGameData.fungusHP !== 0) {
+            freakyFungusElement.classList.replace("walk", "jump");
+        }
+        // disable attack buttons
         let attackButtonElements = document.getElementsByClassName("attack-btn");
         for (i=0; i<attackButtonElements.length; i++) {
           attackButtonElements[i].disabled = true;
